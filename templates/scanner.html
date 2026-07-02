@@ -1,0 +1,186 @@
+{% extends 'base.html' %}
+{% block title %}Scan QR Code{% endblock %}
+{% block page_title %}Scan QR Code{% endblock %}
+
+{% block head %}
+<script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+{% endblock %}
+
+{% block content %}
+<div class="scanner-page">
+    <div class="scanner-card">
+        <div class="scanner-header">
+            <div class="scanner-icon"><i class="fas fa-camera"></i></div>
+            <h4>Scan QR Code Absensi</h4>
+            <p>Arahkan kamera ke QR Code yang ditampilkan dosen</p>
+        </div>
+
+        <div class="scanner-body">
+            <!-- Camera scanner -->
+            <div id="qr-reader" class="qr-reader-box"></div>
+            
+            <!-- Status / Result -->
+            <div id="scan-result" class="scan-result-area" style="display:none"></div>
+
+            <!-- Controls -->
+            <div class="scanner-controls">
+                <button id="startBtn" onclick="startScan()" class="btn btn-start-scan">
+                    <i class="fas fa-camera me-2"></i>Mulai Kamera
+                </button>
+                <button id="stopBtn" onclick="stopScan()" class="btn btn-stop-scan" style="display:none">
+                    <i class="fas fa-stop me-2"></i>Hentikan Kamera
+                </button>
+            </div>
+        </div>
+
+        <div class="scanner-alt">
+            <div class="divider-text">atau masukkan URL token manual</div>
+            <div class="manual-input">
+                <input type="text" id="manualToken" class="form-control form-control-custom" 
+                       placeholder="Masukkan token (contoh: /scan/uuid-disini)">
+                <button onclick="goToManual()" class="btn btn-primary-custom">
+                    <i class="fas fa-arrow-right me-2"></i>Absen
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div class="scanner-tips">
+        <h6><i class="fas fa-lightbulb me-2"></i>Tips Scan</h6>
+        <ul>
+            <li>Pastikan kamera dalam kondisi bersih dan pencahayaan cukup</li>
+            <li>Jaga jarak 15–30 cm dari QR Code</li>
+            <li>Tahan HP tetap stabil saat scan</li>
+            <li>Pastikan seluruh QR Code terlihat di frame kamera</li>
+        </ul>
+    </div>
+</div>
+
+<script>
+let html5QrCode = null;
+
+function startScan() {
+    document.getElementById('startBtn').style.display = 'none';
+    document.getElementById('stopBtn').style.display = 'inline-flex';
+    document.getElementById('scan-result').style.display = 'none';
+
+    html5QrCode = new Html5Qrcode("qr-reader");
+    
+    const config = {
+        fps: 10,
+        qrbox: { width: 250, height: 250 },
+        aspectRatio: 1.0
+    };
+
+    html5QrCode.start(
+        { facingMode: "environment" },
+        config,
+        (decodedText, decodedResult) => {
+            // Sukses scan
+            html5QrCode.stop().then(() => {
+                showScanResult(decodedText);
+            });
+        },
+        (errorMessage) => {
+            // Silent error saat scanning
+        }
+    ).catch(err => {
+        showError('Tidak dapat mengakses kamera: ' + err);
+        document.getElementById('startBtn').style.display = 'inline-flex';
+        document.getElementById('stopBtn').style.display = 'none';
+    });
+}
+
+function stopScan() {
+    if (html5QrCode) {
+        html5QrCode.stop().then(() => {
+            document.getElementById('startBtn').style.display = 'inline-flex';
+            document.getElementById('stopBtn').style.display = 'none';
+        });
+    }
+}
+
+function showScanResult(url) {
+    document.getElementById('startBtn').style.display = 'inline-flex';
+    document.getElementById('stopBtn').style.display = 'none';
+
+    // Cek apakah URL valid (mengandung /scan/)
+    let scanUrl = url;
+    
+    // Jika full URL, ambil path-nya
+    try {
+        const urlObj = new URL(url);
+        scanUrl = urlObj.pathname;
+    } catch(e) {
+        // Bukan URL absolut, gunakan langsung
+    }
+
+    if (scanUrl.includes('/scan/')) {
+        const resultDiv = document.getElementById('scan-result');
+        resultDiv.style.display = 'block';
+        resultDiv.innerHTML = `
+            <div class="scan-success-preview">
+                <div class="scan-success-icon"><i class="fas fa-check-circle"></i></div>
+                <h5>QR Code Berhasil Dibaca!</h5>
+                <p>Mengarahkan ke halaman absensi...</p>
+                <div class="scan-url-preview">${scanUrl}</div>
+                <div class="scan-countdown" id="countdown">Redirect dalam <span id="ctr">3</span> detik...</div>
+            </div>
+        `;
+        
+        // Countdown redirect
+        let count = 3;
+        const ctrEl = document.getElementById('ctr');
+        const timer = setInterval(() => {
+            count--;
+            if (ctrEl) ctrEl.textContent = count;
+            if (count <= 0) {
+                clearInterval(timer);
+                window.location.href = scanUrl;
+            }
+        }, 1000);
+    } else {
+        showError('QR Code tidak valid. Pastikan QR Code dari sistem absensi.');
+    }
+}
+
+function showError(msg) {
+    const resultDiv = document.getElementById('scan-result');
+    resultDiv.style.display = 'block';
+    resultDiv.innerHTML = `
+        <div class="scan-error-preview">
+            <div class="scan-error-icon"><i class="fas fa-times-circle"></i></div>
+            <h5>QR Code Tidak Valid</h5>
+            <p>${msg}</p>
+            <button onclick="document.getElementById('scan-result').style.display='none'; startScan();" class="btn btn-start-scan mt-3">
+                <i class="fas fa-redo me-2"></i>Coba Lagi
+            </button>
+        </div>
+    `;
+}
+
+function goToManual() {
+    const val = document.getElementById('manualToken').value.trim();
+    if (!val) return;
+    
+    // Support berbagai format input
+    if (val.startsWith('/scan/')) {
+        window.location.href = val;
+    } else if (val.includes('/scan/')) {
+        try {
+            const urlObj = new URL(val);
+            window.location.href = urlObj.pathname;
+        } catch(e) {
+            window.location.href = val;
+        }
+    } else {
+        window.location.href = '/scan/' + val;
+    }
+}
+
+// Enter key untuk manual input
+document.getElementById('manualToken').addEventListener('keypress', function(e) {
+    if (e.key === 'Enter') goToManual();
+});
+</script>
+{% endblock %}

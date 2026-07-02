@@ -1,0 +1,97 @@
+{% extends 'base.html' %}
+{% block title %}Login{% endblock %}
+
+{% block content_noauth %}
+<div class="login-page">
+    <div class="login-left">
+        <div class="login-left-content">
+            <div class="login-brand">
+                <div class="login-brand-icon"><i class="fas fa-qrcode"></i></div>
+                <h1>AbsensiQR</h1>
+            </div>
+            <p class="login-tagline">Sistem Absensi Mahasiswa<br>Berbasis QR Code Digital</p>
+            <div class="login-features">
+                <div class="feat-item"><i class="fas fa-bolt"></i> Absensi real-time dengan scan QR</div>
+                <div class="feat-item"><i class="fas fa-shield-alt"></i> Aman dari titip absen</div>
+                <div class="feat-item"><i class="fas fa-chart-bar"></i> Rekap otomatis & export CSV</div>
+                <div class="feat-item"><i class="fas fa-mobile-alt"></i> Scan langsung dari browser</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="login-right">
+        <div class="login-card">
+            <div class="login-card-header">
+                <h2>Masuk ke Sistem</h2>
+                <p>Masukkan kredensial Anda untuk melanjutkan</p>
+            </div>
+
+            <form method="POST" action="{{ url_for('login') }}">
+                <div class="form-group mb-4">
+                    <label class="form-label">Username / NIM</label>
+                    <div class="input-icon-wrap">
+                        <i class="fas fa-user input-icon"></i>
+                        <input type="text" name="username" class="form-control form-control-lg ps-5"
+                               placeholder="Masukkan username atau NIM" required autofocus>
+                    </div>
+                </div>
+
+                <div class="form-group mb-4">
+                    <label class="form-label">Password</label>
+                    <div class="input-icon-wrap">
+                        <i class="fas fa-lock input-icon"></i>
+                        <input type="password" name="password" id="passwordInput"
+                               class="form-control form-control-lg ps-5"
+                               placeholder="Masukkan password" required>
+                        <button type="button" class="toggle-pass" onclick="togglePass()">
+                            <i class="fas fa-eye" id="eyeIcon"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <button type="submit" class="btn btn-login w-100">
+                    <i class="fas fa-sign-in-alt me-2"></i>Masuk
+                </button>
+            </form>
+
+            <div class="login-demo mt-4">
+                <div class="demo-title">Demo Akun</div>
+                <div class="demo-accounts">
+                    <div class="demo-account" onclick="fillLogin('dosen1','dosen123')">
+                        <i class="fas fa-chalkboard-teacher"></i>
+                        <div>
+                            <div class="demo-name">Dr. Budi Santoso</div>
+                            <div class="demo-cred">dosen1 / dosen123</div>
+                        </div>
+                    </div>
+                    <div class="demo-account" onclick="fillLogin('2201001','mhs123')">
+                        <i class="fas fa-graduation-cap"></i>
+                        <div>
+                            <div class="demo-name">Andi Pratama</div>
+                            <div class="demo-cred">2201001 / mhs123</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function fillLogin(user, pass) {
+    document.querySelector('[name=username]').value = user;
+    document.querySelector('[name=password]').value = pass;
+}
+function togglePass() {
+    const inp = document.getElementById('passwordInput');
+    const icon = document.getElementById('eyeIcon');
+    if (inp.type === 'password') {
+        inp.type = 'text';
+        icon.classList.replace('fa-eye', 'fa-eye-slash');
+    } else {
+        inp.type = 'password';
+        icon.classList.replace('fa-eye-slash', 'fa-eye');
+    }
+}
+</script>
+{% endblock %}

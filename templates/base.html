@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}AbsensiQR{% endblock %} — Sistem Absensi Digital</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    {% block head %}{% endblock %}
+</head>
+<body>
+
+{% if session.get('user_id') %}
+<!-- Sidebar -->
+<div class="sidebar" id="sidebar">
+    <div class="sidebar-brand">
+        <div class="brand-icon"><i class="fas fa-qrcode"></i></div>
+        <div class="brand-text">
+            <span class="brand-name">AbsensiQR</span>
+            <span class="brand-sub">Sistem Absensi Digital</span>
+        </div>
+    </div>
+
+    <div class="sidebar-user">
+        <div class="user-avatar">
+            {{ session.get('nama', 'U')[0].upper() }}
+        </div>
+        <div class="user-info">
+            <div class="user-name">{{ session.get('nama', 'User') }}</div>
+            <div class="user-role">
+                {% if session.get('role') == 'dosen' %}
+                <span class="badge-role dosen"><i class="fas fa-chalkboard-teacher me-1"></i>Dosen</span>
+                {% else %}
+                <span class="badge-role mahasiswa"><i class="fas fa-graduation-cap me-1"></i>Mahasiswa</span>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <nav class="sidebar-nav">
+        {% if session.get('role') == 'dosen' %}
+        <div class="nav-label">Menu Dosen</div>
+        <a href="{{ url_for('dashboard_dosen') }}" class="nav-item {% if request.endpoint == 'dashboard_dosen' %}active{% endif %}">
+            <i class="fas fa-th-large"></i> <span>Dashboard</span>
+        </a>
+        <a href="{{ url_for('buat_sesi') }}" class="nav-item {% if request.endpoint == 'buat_sesi' %}active{% endif %}">
+            <i class="fas fa-plus-circle"></i> <span>Buat Sesi</span>
+        </a>
+        {% else %}
+        <div class="nav-label">Menu Mahasiswa</div>
+        <a href="{{ url_for('dashboard_mahasiswa') }}" class="nav-item {% if request.endpoint == 'dashboard_mahasiswa' %}active{% endif %}">
+            <i class="fas fa-th-large"></i> <span>Dashboard</span>
+        </a>
+        <a href="{{ url_for('scanner') }}" class="nav-item {% if request.endpoint == 'scanner' %}active{% endif %}">
+            <i class="fas fa-camera"></i> <span>Scan QR Code</span>
+        </a>
+        {% endif %}
+    </nav>
+
+    <div class="sidebar-footer">
+        <a href="{{ url_for('logout') }}" class="nav-item logout-btn">
+            <i class="fas fa-sign-out-alt"></i> <span>Logout</span>
+        </a>
+    </div>
+</div>
+
+<!-- Overlay mobile -->
+<div class="sidebar-overlay" id="sidebarOverlay" onclick="toggleSidebar()"></div>
+
+<!-- Main Content -->
+<div class="main-wrapper">
+    <header class="topbar">
+        <button class="toggle-btn" onclick="toggleSidebar()">
+            <i class="fas fa-bars"></i>
+        </button>
+        <div class="topbar-title">{% block page_title %}Dashboard{% endblock %}</div>
+        <div class="topbar-right">
+            <span class="topbar-time" id="clock"></span>
+        </div>
+    </header>
+
+    <main class="main-content">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+        <div class="flash-container">
+            {% for category, message in messages %}
+            <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+                {% if category == 'success' %}<i class="fas fa-check-circle me-2"></i>
+                {% elif category == 'danger' %}<i class="fas fa-exclamation-circle me-2"></i>
+                {% elif category == 'warning' %}<i class="fas fa-exclamation-triangle me-2"></i>
+                {% else %}<i class="fas fa-info-circle me-2"></i>{% endif %}
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+        {% endwith %}
+
+        {% block content %}{% endblock %}
+    </main>
+</div>
+
+{% else %}
+<!-- No sidebar layout (login page) -->
+{% with messages = get_flashed_messages(with_categories=true) %}
+{% if messages %}
+<div style="position:fixed;top:1rem;right:1rem;z-index:9999;min-width:320px">
+    {% for category, message in messages %}
+    <div class="alert alert-{{ category }} alert-dismissible fade show shadow" role="alert">
+        {{ message }}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+    {% endfor %}
+</div>
+{% endif %}
+{% endwith %}
+{% block content_noauth %}{% endblock %}
+{% endif %}
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+function toggleSidebar() {
+    document.getElementById('sidebar').classList.toggle('open');
+    document.getElementById('sidebarOverlay').classList.toggle('show');
+}
+
+function updateClock() {
+    const el = document.getElementById('clock');
+    if (el) {
+        const now = new Date();
+        el.textContent = now.toLocaleTimeString('id-ID', {hour:'2-digit', minute:'2-digit', second:'2-digit'});
+    }
+}
+setInterval(updateClock, 1000);
+updateClock();
+</script>
+{% block scripts %}{% endblock %}
+</body>
+</html>

@@ -1,0 +1,106 @@
+{% extends 'base.html' %}
+{% block title %}Dashboard Mahasiswa{% endblock %}
+{% block page_title %}Dashboard Mahasiswa{% endblock %}
+
+{% block content %}
+<!-- Profile Card -->
+<div class="profile-banner">
+    <div class="profile-avatar-lg">{{ mahasiswa.nama[0].upper() }}</div>
+    <div class="profile-info">
+        <h3>{{ mahasiswa.nama }}</h3>
+        <div class="profile-meta">
+            <span><i class="fas fa-id-card me-1"></i>NIM: {{ mahasiswa.nim }}</span>
+            <span><i class="fas fa-graduation-cap me-1"></i>Mahasiswa Aktif</span>
+        </div>
+    </div>
+    <a href="{{ url_for('scanner') }}" class="btn btn-scan-now">
+        <i class="fas fa-camera me-2"></i>Scan QR Sekarang
+    </a>
+</div>
+
+<!-- Stats -->
+<div class="stats-grid">
+    <div class="stat-card primary">
+        <div class="stat-icon"><i class="fas fa-check-circle"></i></div>
+        <div class="stat-body">
+            <div class="stat-value">{{ absensi_list | length }}</div>
+            <div class="stat-label">Total Kehadiran</div>
+        </div>
+    </div>
+    <div class="stat-card success">
+        <div class="stat-icon"><i class="fas fa-book"></i></div>
+        <div class="stat-body">
+            <div class="stat-value">{{ absensi_list | map(attribute='sesi') | map(attribute='matakuliah') | list | unique | list | length }}</div>
+            <div class="stat-label">Mata Kuliah</div>
+        </div>
+    </div>
+    <div class="stat-card info">
+        <div class="stat-icon"><i class="fas fa-calendar-day"></i></div>
+        <div class="stat-body">
+            {% set today_abs = namespace(n=0) %}
+            {% for ab in absensi_list %}{% if ab.waktu_absen.strftime('%Y-%m-%d') == now_date %}{% set today_abs.n = today_abs.n + 1 %}{% endif %}{% endfor %}
+            <div class="stat-value">{{ today_abs.n }}</div>
+            <div class="stat-label">Absen Hari Ini</div>
+        </div>
+    </div>
+    <div class="stat-card warning">
+        <div class="stat-icon"><i class="fas fa-qrcode"></i></div>
+        <div class="stat-body">
+            <div class="stat-value"><i class="fas fa-camera" style="font-size:1.2rem"></i></div>
+            <div class="stat-label"><a href="{{ url_for('scanner') }}" style="color:inherit;text-decoration:none">Scan QR</a></div>
+        </div>
+    </div>
+</div>
+
+<!-- Riwayat Absensi -->
+<div class="section-header">
+    <div>
+        <h4 class="section-title">Riwayat Absensi</h4>
+        <p class="section-sub">Rekap kehadiran Anda di setiap pertemuan</p>
+    </div>
+</div>
+
+{% if absensi_list %}
+<div class="card-custom">
+    <div class="table-responsive">
+        <table class="table table-custom">
+            <thead>
+                <tr>
+                    <th>No</th>
+                    <th>Mata Kuliah</th>
+                    <th>Pertemuan</th>
+                    <th>Tanggal</th>
+                    <th>Waktu Absen</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for ab in absensi_list %}
+                <tr>
+                    <td><span class="row-num">{{ loop.index }}</span></td>
+                    <td><div class="course-name">{{ ab.sesi.matakuliah }}</div></td>
+                    <td><span class="badge-pertemuan">Ke-{{ ab.sesi.pertemuan_ke }}</span></td>
+                    <td>{{ ab.sesi.tanggal.strftime('%d %b %Y') }}</td>
+                    <td>
+                        <span class="time-range">
+                            <i class="fas fa-clock me-1"></i>{{ ab.waktu_absen.strftime('%H:%M:%S') }}
+                        </span>
+                    </td>
+                    <td><span class="status-badge active"><i class="fas fa-check me-1"></i>Hadir</span></td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% else %}
+<div class="empty-state">
+    <div class="empty-icon"><i class="fas fa-clipboard-list"></i></div>
+    <h5>Belum Ada Riwayat Absensi</h5>
+    <p>Scan QR Code dari dosen untuk mencatat kehadiran Anda.</p>
+    <a href="{{ url_for('scanner') }}" class="btn btn-primary-custom">
+        <i class="fas fa-camera me-2"></i>Scan QR Code
+    </a>
+</div>
+{% endif %}
+{% endblock %}

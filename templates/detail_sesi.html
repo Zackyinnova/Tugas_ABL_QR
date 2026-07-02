@@ -1,0 +1,163 @@
+{% extends 'base.html' %}
+{% block title %}Detail Sesi - {{ sesi.matakuliah }}{% endblock %}
+{% block page_title %}Detail Sesi{% endblock %}
+
+{% block content %}
+<div class="back-link">
+    <a href="{{ url_for('dashboard_dosen') }}"><i class="fas fa-arrow-left me-2"></i>Kembali ke Dashboard</a>
+</div>
+
+<div class="detail-grid">
+    <!-- Info Sesi + QR -->
+    <div class="detail-left">
+        <div class="card-custom mb-4">
+            <div class="card-header-custom">
+                <h5><i class="fas fa-info-circle me-2"></i>Informasi Sesi</h5>
+                {% if is_active %}
+                <span class="status-badge active pulse-badge"><i class="fas fa-circle me-1"></i>Sesi Aktif</span>
+                {% else %}
+                <span class="status-badge done"><i class="fas fa-check me-1"></i>Selesai</span>
+                {% endif %}
+            </div>
+            <div class="sesi-info-list">
+                <div class="sesi-info-item">
+                    <span class="info-label"><i class="fas fa-book me-2"></i>Mata Kuliah</span>
+                    <span class="info-value bold">{{ sesi.matakuliah }}</span>
+                </div>
+                <div class="sesi-info-item">
+                    <span class="info-label"><i class="fas fa-layer-group me-2"></i>Pertemuan</span>
+                    <span class="info-value">Ke-{{ sesi.pertemuan_ke }}</span>
+                </div>
+                <div class="sesi-info-item">
+                    <span class="info-label"><i class="fas fa-calendar me-2"></i>Tanggal</span>
+                    <span class="info-value">{{ sesi.tanggal.strftime('%A, %d %B %Y') }}</span>
+                </div>
+                <div class="sesi-info-item">
+                    <span class="info-label"><i class="fas fa-clock me-2"></i>Waktu</span>
+                    <span class="info-value">{{ sesi.jam_mulai.strftime('%H:%M') }} – {{ sesi.jam_selesai.strftime('%H:%M') }} WIB</span>
+                </div>
+                <div class="sesi-info-item">
+                    <span class="info-label"><i class="fas fa-users me-2"></i>Jumlah Hadir</span>
+                    <span class="info-value highlight">{{ absensi_list | length }} mahasiswa</span>
+                </div>
+                <div class="sesi-info-item">
+                    <span class="info-label"><i class="fas fa-key me-2"></i>Token</span>
+                    <span class="info-value token-text">{{ sesi.token[:8] }}...</span>
+                </div>
+            </div>
+
+            <div class="card-actions">
+                <a href="{{ url_for('export_csv', sesi_id=sesi.id) }}" class="btn btn-export">
+                    <i class="fas fa-file-csv me-2"></i>Export CSV
+                </a>
+                <a href="{{ url_for('regenerate_qr', sesi_id=sesi.id) }}" class="btn btn-regenerate">
+                    <i class="fas fa-sync me-2"></i>Regenerate QR
+                </a>
+            </div>
+        </div>
+
+        <!-- QR Code -->
+        <div class="card-custom qr-card">
+            <div class="card-header-custom">
+                <h5><i class="fas fa-qrcode me-2"></i>QR Code Absensi</h5>
+            </div>
+            <div class="qr-display">
+                {% if qr_exists %}
+                <img src="{{ url_for('static', filename=qr_path) }}?v={{ sesi.id }}" 
+                     alt="QR Code" class="qr-image" id="qrImg">
+                {% else %}
+                <div class="qr-placeholder"><i class="fas fa-qrcode"></i><p>QR tidak tersedia</p></div>
+                {% endif %}
+            </div>
+            {% if is_active %}
+            <div class="qr-status active-qr">
+                <i class="fas fa-wifi me-2"></i>QR Code aktif — Mahasiswa dapat scan sekarang
+            </div>
+            {% else %}
+            <div class="qr-status expired-qr">
+                <i class="fas fa-ban me-2"></i>QR Code sudah tidak aktif
+            </div>
+            {% endif %}
+            <div class="qr-actions">
+                <button onclick="downloadQR()" class="btn btn-qr-download">
+                    <i class="fas fa-download me-2"></i>Download QR
+                </button>
+                <button onclick="printQR()" class="btn btn-qr-print">
+                    <i class="fas fa-print me-2"></i>Print QR
+                </button>
+            </div>
+            <div class="scan-url mt-3">
+                <small class="text-muted">URL Scan:</small>
+                <code class="scan-url-text">/scan/{{ sesi.token }}</code>
+            </div>
+        </div>
+    </div>
+
+    <!-- Daftar Hadir -->
+    <div class="detail-right">
+        <div class="card-custom">
+            <div class="card-header-custom">
+                <h5><i class="fas fa-clipboard-list me-2"></i>Daftar Hadir</h5>
+                <span class="count-badge">{{ absensi_list | length }}</span>
+            </div>
+            {% if absensi_list %}
+            <div class="attendance-list">
+                {% for ab in absensi_list %}
+                <div class="attendance-item">
+                    <div class="att-avatar">{{ ab.mahasiswa.nama[0].upper() }}</div>
+                    <div class="att-info">
+                        <div class="att-name">{{ ab.mahasiswa.nama }}</div>
+                        <div class="att-nim">NIM: {{ ab.mahasiswa.nim }}</div>
+                    </div>
+                    <div class="att-time">
+                        <i class="fas fa-clock me-1"></i>{{ ab.waktu_absen.strftime('%H:%M:%S') }}
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <div class="empty-state small-empty">
+                <div class="empty-icon"><i class="fas fa-user-clock"></i></div>
+                <p>Belum ada mahasiswa yang absen</p>
+                <small>Mahasiswa dapat scan QR Code untuk absen</small>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<script>
+function downloadQR() {
+    const img = document.getElementById('qrImg');
+    if (!img) return;
+    const a = document.createElement('a');
+    a.href = img.src;
+    a.download = 'qr_absensi_{{ sesi.matakuliah | replace(" ","_") }}_pertemuan{{ sesi.pertemuan_ke }}.png';
+    a.click();
+}
+
+function printQR() {
+    const img = document.getElementById('qrImg');
+    if (!img) return;
+    const win = window.open('', '_blank');
+    win.document.write(`
+        <html><head><title>QR Absensi - {{ sesi.matakuliah }}</title>
+        <style>
+            body { font-family: Arial; text-align: center; padding: 40px; }
+            img { width: 300px; height: 300px; }
+            h2 { margin-bottom: 5px; }
+            p { color: #666; margin: 5px 0; }
+        </style></head><body>
+        <h2>{{ sesi.matakuliah }}</h2>
+        <p>Pertemuan Ke-{{ sesi.pertemuan_ke }} | {{ sesi.tanggal.strftime('%d %B %Y') }}</p>
+        <p>{{ sesi.jam_mulai.strftime('%H:%M') }} – {{ sesi.jam_selesai.strftime('%H:%M') }} WIB</p>
+        <br>
+        <img src="${img.src}" />
+        <p><strong>Scan QR Code untuk Absensi</strong></p>
+        </body></html>
+    `);
+    win.document.close();
+    win.print();
+}
+</script>
+{% endblock %}

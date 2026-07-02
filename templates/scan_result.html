@@ -1,0 +1,103 @@
+{% extends 'base.html' %}
+{% block title %}Hasil Absensi{% endblock %}
+{% block page_title %}Hasil Absensi{% endblock %}
+
+{% block content %}
+<div class="result-page">
+    <div class="result-card {% if status == 'success' %}success{% elif status == 'duplicate' %}warning{% else %}error{% endif %}">
+        
+        {% if status == 'success' %}
+        <div class="result-icon success"><i class="fas fa-check-circle"></i></div>
+        <h3 class="result-title">Absensi Berhasil!</h3>
+        <p class="result-msg">{{ message }}</p>
+        
+        <div class="result-details">
+            <div class="result-detail-item">
+                <span class="rd-label">Nama</span>
+                <span class="rd-value">{{ mahasiswa.nama }}</span>
+            </div>
+            <div class="result-detail-item">
+                <span class="rd-label">NIM</span>
+                <span class="rd-value">{{ mahasiswa.nim }}</span>
+            </div>
+            {% if sesi %}
+            <div class="result-detail-item">
+                <span class="rd-label">Mata Kuliah</span>
+                <span class="rd-value">{{ sesi.matakuliah }}</span>
+            </div>
+            <div class="result-detail-item">
+                <span class="rd-label">Pertemuan</span>
+                <span class="rd-value">Ke-{{ sesi.pertemuan_ke }}</span>
+            </div>
+            {% endif %}
+            {% if waktu %}
+            <div class="result-detail-item">
+                <span class="rd-label">Waktu Absen</span>
+                <span class="rd-value">{{ waktu.strftime('%H:%M:%S') }} WIB</span>
+            </div>
+            {% endif %}
+        </div>
+
+        {% elif status == 'duplicate' %}
+        <div class="result-icon warning"><i class="fas fa-exclamation-circle"></i></div>
+        <h3 class="result-title">Sudah Absen</h3>
+        <p class="result-msg">{{ message }}</p>
+        {% if sesi %}
+        <div class="result-details">
+            <div class="result-detail-item">
+                <span class="rd-label">Mata Kuliah</span>
+                <span class="rd-value">{{ sesi.matakuliah }}</span>
+            </div>
+            <div class="result-detail-item">
+                <span class="rd-label">Pertemuan</span>
+                <span class="rd-value">Ke-{{ sesi.pertemuan_ke }}</span>
+            </div>
+            {% if waktu %}
+            <div class="result-detail-item">
+                <span class="rd-label">Waktu Absen Sebelumnya</span>
+                <span class="rd-value">{{ waktu.strftime('%H:%M:%S') }} WIB</span>
+            </div>
+            {% endif %}
+        </div>
+        {% endif %}
+
+        {% elif status == 'expired' %}
+        <div class="result-icon error"><i class="fas fa-clock"></i></div>
+        <h3 class="result-title">Sesi Berakhir</h3>
+        <p class="result-msg">{{ message }}</p>
+        {% if sesi %}
+        <div class="result-details">
+            <div class="result-detail-item">
+                <span class="rd-label">Mata Kuliah</span>
+                <span class="rd-value">{{ sesi.matakuliah }}</span>
+            </div>
+            <div class="result-detail-item">
+                <span class="rd-label">Jam Selesai</span>
+                <span class="rd-value">{{ sesi.jam_selesai.strftime('%H:%M') }} WIB</span>
+            </div>
+        </div>
+        {% endif %}
+
+        {% else %}
+        <div class="result-icon error"><i class="fas fa-times-circle"></i></div>
+        <h3 class="result-title">Absensi Gagal</h3>
+        <p class="result-msg">{{ message }}</p>
+        {% endif %}
+
+        <div class="result-actions">
+            {% if session.get('role') == 'mahasiswa' %}
+            <a href="{{ url_for('dashboard_mahasiswa') }}" class="btn btn-primary-custom">
+                <i class="fas fa-th-large me-2"></i>Dashboard
+            </a>
+            <a href="{{ url_for('scanner') }}" class="btn btn-cancel">
+                <i class="fas fa-camera me-2"></i>Scan Lagi
+            </a>
+            {% else %}
+            <a href="{{ url_for('login') }}" class="btn btn-primary-custom">
+                <i class="fas fa-sign-in-alt me-2"></i>Login Dulu
+            </a>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,104 @@
+{% extends 'base.html' %}
+{% block title %}Buat Sesi Absensi{% endblock %}
+{% block page_title %}Buat Sesi Baru{% endblock %}
+
+{% block content %}
+<div class="form-page">
+    <div class="form-card">
+        <div class="form-card-header">
+            <div class="form-icon"><i class="fas fa-calendar-plus"></i></div>
+            <div>
+                <h4>Buat Sesi Absensi</h4>
+                <p>Isi detail pertemuan untuk generate QR Code absensi</p>
+            </div>
+        </div>
+
+        <form method="POST" action="{{ url_for('buat_sesi') }}">
+            <div class="row g-4">
+                <div class="col-md-8">
+                    <div class="form-group-custom">
+                        <label class="form-label-custom">
+                            <i class="fas fa-book me-2"></i>Nama Mata Kuliah
+                        </label>
+                        <input type="text" name="matakuliah" class="form-control form-control-custom"
+                               placeholder="Contoh: Pemrograman Web, Basis Data, ..."
+                               list="matkul-list" required>
+                        <datalist id="matkul-list">
+                            <option value="Pemrograman Web">
+                            <option value="Basis Data">
+                            <option value="Jaringan Komputer">
+                            <option value="Kecerdasan Buatan">
+                            <option value="Rekayasa Perangkat Lunak">
+                            <option value="Sistem Operasi">
+                            <option value="Struktur Data">
+                            <option value="Algoritma Pemrograman">
+                        </datalist>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="form-group-custom">
+                        <label class="form-label-custom">
+                            <i class="fas fa-sort-numeric-up me-2"></i>Pertemuan Ke-
+                        </label>
+                        <input type="number" name="pertemuan_ke" class="form-control form-control-custom"
+                               min="1" max="16" value="1" required>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="form-group-custom">
+                        <label class="form-label-custom">
+                            <i class="fas fa-calendar me-2"></i>Tanggal
+                        </label>
+                        <input type="date" name="tanggal" id="tanggal" class="form-control form-control-custom" required>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="form-group-custom">
+                        <label class="form-label-custom">
+                            <i class="fas fa-play-circle me-2"></i>Jam Mulai
+                        </label>
+                        <input type="time" name="jam_mulai" id="jam_mulai" class="form-control form-control-custom" required>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="form-group-custom">
+                        <label class="form-label-custom">
+                            <i class="fas fa-stop-circle me-2"></i>Jam Selesai
+                        </label>
+                        <input type="time" name="jam_selesai" id="jam_selesai" class="form-control form-control-custom" required>
+                    </div>
+                </div>
+            </div>
+
+            <div class="info-box mt-4">
+                <i class="fas fa-info-circle me-2"></i>
+                QR Code akan otomatis di-generate setelah sesi dibuat. Mahasiswa hanya dapat absen saat sesi berlangsung.
+            </div>
+
+            <div class="form-actions mt-4">
+                <a href="{{ url_for('dashboard_dosen') }}" class="btn btn-cancel">
+                    <i class="fas fa-arrow-left me-2"></i>Batal
+                </a>
+                <button type="submit" class="btn btn-primary-custom">
+                    <i class="fas fa-qrcode me-2"></i>Buat Sesi & Generate QR
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+// Set default tanggal dan jam hari ini
+const today = new Date();
+const pad = n => String(n).padStart(2, '0');
+const dateStr = `${today.getFullYear()}-${pad(today.getMonth()+1)}-${pad(today.getDate())}`;
+const timeStr = `${pad(today.getHours())}:${pad(today.getMinutes())}`;
+
+document.getElementById('tanggal').value = dateStr;
+document.getElementById('jam_mulai').value = timeStr;
+
+// Auto set jam selesai +2 jam
+const endDate = new Date(today.getTime() + 2*60*60*1000);
+document.getElementById('jam_selesai').value = `${pad(endDate.getHours())}:${pad(endDate.getMinutes())}`;
+</script>
+{% endblock %}
