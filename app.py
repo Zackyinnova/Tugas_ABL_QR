@@ -371,5 +371,9 @@ def seed_data():
     print("   NIM: 2201001 s/d 2201005")
 
 
-if __name__ == "__main__":
-    app.run(debug=True, host='0.0.0.0', port=5000)
+with app.app_context():
+    db.create_all()
+    seed_data()
+
+if __name__ == '__main__':
+    app.run(debug=True)
