@@ -8,17 +8,28 @@ import qrcode
 import os
 import csv
 import io
+import pymysql
+
+pymysql.install_as_MySQLdb()
 
 app = Flask(__name__)
 app.secret_key = 'absensi_qr_secret_key_2024'
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///absensi.db'
+
+# Lokal
+db_url = 'mysql+pymysql://root:@localhost/db_abl_absensi'
+
+# Kalau deploy (Railway/hosting lain), ambil dari environment variable
+db_url = os.environ.get('DATABASE_URL', db_url)
+if db_url.startswith('mysql://'):
+    db_url = db_url.replace('mysql://', 'mysql+pymysql://', 1)
+
+app.config['SQLALCHEMY_DATABASE_URI'] = db_url
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 db.init_app(app)
 
 QR_FOLDER = os.path.join('static', 'qr')
 os.makedirs(QR_FOLDER, exist_ok=True)
-
 
 @app.context_processor
 def inject_globals():
@@ -28,7 +39,6 @@ def inject_globals():
         'now_time': now.strftime('%H:%M'),
         'now_datetime': now,
     }
-
 
 # ─────────────────────────────────────────────
 # HELPER
@@ -361,8 +371,5 @@ def seed_data():
     print("   NIM: 2201001 s/d 2201005")
 
 
-if __name__ == '__main__':
-    with app.app_context():
-        db.create_all()
-        seed_data()
-    app.run(debug=True)
+if __name__ == "__main__":
+    app.run(debug=True, host='0.0.0.0', port=5000)
