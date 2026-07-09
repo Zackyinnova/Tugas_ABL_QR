@@ -25,6 +25,10 @@
                     <span class="info-value bold">{{ sesi.matakuliah }}</span>
                 </div>
                 <div class="sesi-info-item">
+                    <span class="info-label"><i class="fas fa-chalkboard me-2"></i>Kelas</span>
+                    <span class="info-value">{{ sesi.kelas.nama_kelas }}</span>
+                </div>
+                <div class="sesi-info-item">
                     <span class="info-label"><i class="fas fa-layer-group me-2"></i>Pertemuan</span>
                     <span class="info-value">Ke-{{ sesi.pertemuan_ke }}</span>
                 </div>
@@ -37,7 +41,11 @@
                     <span class="info-value">{{ sesi.jam_mulai.strftime('%H:%M') }} – {{ sesi.jam_selesai.strftime('%H:%M') }} WIB</span>
                 </div>
                 <div class="sesi-info-item">
-                    <span class="info-label"><i class="fas fa-users me-2"></i>Jumlah Hadir</span>
+                    <span class="info-label"><i class="fas fa-hourglass-half me-2"></i>Batas Telat</span>
+                    <span class="info-value">{{ sesi.batas_telat_menit }} menit setelah jam mulai</span>
+                </div>
+                <div class="sesi-info-item">
+                    <span class="info-label"><i class="fas fa-users me-2"></i>Jumlah Mahasiswa</span>
                     <span class="info-value highlight">{{ absensi_list | length }} mahasiswa</span>
                 </div>
                 <div class="sesi-info-item">
@@ -93,13 +101,26 @@
         </div>
     </div>
 
-    <!-- Daftar Hadir -->
+    <!-- Daftar Mahasiswa & Status -->
     <div class="detail-right">
         <div class="card-custom">
             <div class="card-header-custom">
-                <h5><i class="fas fa-clipboard-list me-2"></i>Daftar Hadir</h5>
+                <h5><i class="fas fa-clipboard-list me-2"></i>Daftar Mahasiswa & Status</h5>
                 <span class="count-badge">{{ absensi_list | length }}</span>
             </div>
+
+            <!-- Ringkasan status -->
+            <div class="status-summary">
+                {% set hadir = absensi_list | selectattr('status', 'equalto', 'hadir') | list | length %}
+                {% set telat = absensi_list | selectattr('status', 'equalto', 'telat') | list | length %}
+                {% set izin = absensi_list | selectattr('status', 'equalto', 'izin') | list | length %}
+                {% set tidak_masuk = absensi_list | selectattr('status', 'equalto', 'tidak_masuk') | list | length %}
+                <span class="summary-pill pill-hadir"><i class="fas fa-check-circle me-1"></i>Hadir: {{ hadir }}</span>
+                <span class="summary-pill pill-telat"><i class="fas fa-clock me-1"></i>Telat: {{ telat }}</span>
+                <span class="summary-pill pill-izin"><i class="fas fa-file-alt me-1"></i>Izin: {{ izin }}</span>
+                <span class="summary-pill pill-tidak-masuk"><i class="fas fa-times-circle me-1"></i>Tidak Masuk: {{ tidak_masuk }}</span>
+            </div>
+
             {% if absensi_list %}
             <div class="attendance-list">
                 {% for ab in absensi_list %}
@@ -109,22 +130,105 @@
                         <div class="att-name">{{ ab.mahasiswa.nama }}</div>
                         <div class="att-nim">NIM: {{ ab.mahasiswa.nim }}</div>
                     </div>
-                    <div class="att-time">
-                        <i class="fas fa-clock me-1"></i>{{ ab.waktu_absen.strftime('%H:%M:%S') }}
+
+                    <div class="att-status">
+                        {% if ab.status == 'hadir' %}
+                            <span class="status-pill pill-hadir"><i class="fas fa-check-circle me-1"></i>Hadir</span>
+                        {% elif ab.status == 'telat' %}
+                            <span class="status-pill pill-telat"><i class="fas fa-clock me-1"></i>Telat</span>
+                        {% elif ab.status == 'izin' %}
+                            <span class="status-pill pill-izin"><i class="fas fa-file-alt me-1"></i>Izin</span>
+                        {% else %}
+                            <span class="status-pill pill-tidak-masuk"><i class="fas fa-times-circle me-1"></i>Tidak Masuk</span>
+                        {% endif %}
+
+                        {% if ab.waktu_absen %}
+                        <div class="att-time">
+                            <i class="fas fa-clock me-1"></i>{{ ab.waktu_absen.strftime('%H:%M:%S') }}
+                        </div>
+                        {% endif %}
                     </div>
+
+                    <form method="POST" action="{{ url_for('ubah_status', sesi_id=sesi.id, mahasiswa_id=ab.mahasiswa.id) }}" class="att-status-form">
+                        <select name="status" class="status-select">
+                            <option value="hadir" {% if ab.status == 'hadir' %}selected{% endif %}>Hadir</option>
+                            <option value="telat" {% if ab.status == 'telat' %}selected{% endif %}>Telat</option>
+                            <option value="izin" {% if ab.status == 'izin' %}selected{% endif %}>Izin</option>
+                            <option value="tidak_masuk" {% if ab.status == 'tidak_masuk' %}selected{% endif %}>Tidak Masuk</option>
+                        </select>
+                        <button type="submit" class="btn btn-status-save"><i class="fas fa-save"></i></button>
+                    </form>
                 </div>
                 {% endfor %}
             </div>
             {% else %}
             <div class="empty-state small-empty">
                 <div class="empty-icon"><i class="fas fa-user-clock"></i></div>
-                <p>Belum ada mahasiswa yang absen</p>
-                <small>Mahasiswa dapat scan QR Code untuk absen</small>
+                <p>Belum ada mahasiswa terdaftar di kelas ini</p>
+                <small>Tambahkan mahasiswa ke kelas terlebih dahulu</small>
             </div>
             {% endif %}
         </div>
     </div>
 </div>
+
+<style>
+.status-summary {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    padding: 12px 16px;
+    border-bottom: 1px solid rgba(0,0,0,0.08);
+}
+.summary-pill {
+    font-size: 0.8rem;
+    padding: 4px 10px;
+    border-radius: 999px;
+    font-weight: 600;
+}
+.pill-hadir { background: #d1f7dd; color: #147a3e; }
+.pill-telat { background: #fff3cd; color: #8a6100; }
+.pill-izin { background: #d6ebff; color: #0b5aad; }
+.pill-tidak-masuk { background: #fde2e2; color: #a3221f; }
+
+.att-status {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 2px;
+    margin-right: 10px;
+}
+.status-pill {
+    font-size: 0.75rem;
+    padding: 3px 9px;
+    border-radius: 999px;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+.att-status-form {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+.status-select {
+    font-size: 0.8rem;
+    padding: 4px 6px;
+    border-radius: 6px;
+    border: 1px solid #ccc;
+}
+.btn-status-save {
+    border: none;
+    background: #4a6cf7;
+    color: #fff;
+    border-radius: 6px;
+    padding: 5px 9px;
+    cursor: pointer;
+}
+.btn-status-save:hover {
+    background: #3a5ce0;
+}
+</style>
 
 <script>
 function downloadQR() {

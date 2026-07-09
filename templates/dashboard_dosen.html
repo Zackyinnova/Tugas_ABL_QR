@@ -15,7 +15,7 @@
     <div class="stat-card success">
         <div class="stat-icon"><i class="fas fa-users"></i></div>
         <div class="stat-body">
-            <div class="stat-value">{{ stats.values() | sum }}</div>
+            <div class="stat-value">{{ stats.values() | sum(attribute='hadir') }}</div>
             <div class="stat-label">Total Kehadiran</div>
         </div>
     </div>
@@ -60,7 +60,7 @@
                     <th>Pertemuan</th>
                     <th>Tanggal</th>
                     <th>Jam</th>
-                    <th>Hadir</th>
+                    <th>Hadir / Telat / Izin</th>
                     <th>Status</th>
                     <th>Aksi</th>
                 </tr>
@@ -87,7 +87,10 @@
                     </td>
                     <td>
                         <span class="attendance-count">
-                            <i class="fas fa-user-check me-1"></i>{{ stats[sesi.id] }} mahasiswa
+                            <i class="fas fa-user-check me-1"></i>{{ stats[sesi.id].hadir }} /
+                            {{ stats[sesi.id].telat }} /
+                            {{ stats[sesi.id].izin }}
+                            <span class="text-muted">(dari {{ stats[sesi.id].total }} mhs)</span>
                         </span>
                     </td>
                     <td>

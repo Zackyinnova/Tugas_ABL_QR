@@ -35,6 +35,7 @@
                         </datalist>
                     </div>
                 </div>
+
                 <div class="col-md-4">
                     <div class="form-group-custom">
                         <label class="form-label-custom">
@@ -44,6 +45,7 @@
                                min="1" max="16" value="1" required>
                     </div>
                 </div>
+
                 <div class="col-md-4">
                     <div class="form-group-custom">
                         <label class="form-label-custom">
@@ -67,6 +69,23 @@
                         </label>
                         <input type="time" name="jam_selesai" id="jam_selesai" class="form-control form-control-custom" required>
                     </div>
+                </div>
+
+                <div class="mb-3">
+                    <label for="batas_telat_menit" class="form-label">Batas Waktu Telat (menit)</label>
+                    <input type="number" class="form-control" id="batas_telat_menit" name="batas_telat_menit"
+                        min="1" value="30" placeholder="30">
+                    <div class="form-text">Mahasiswa yang scan melewati batas ini akan tercatat TELAT, bukan HADIR.</div>
+                </div>
+
+                <div class="mb-3">
+                    <label for="kelas_id" class="form-label">Kelas</label>
+                    <select name="kelas_id" id="kelas_id" class="form-control" required>
+                        <option value="">-- Pilih Kelas --</option>
+                        {% for kelas in kelas_list %}
+                        <option value="{{ kelas.id }}">{{ kelas.nama_kelas }}</option>
+                        {% endfor %}
+                    </select>
                 </div>
             </div>
 
